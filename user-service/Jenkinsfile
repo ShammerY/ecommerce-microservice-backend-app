@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.9.4-eclipse-temurin-17'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent any
 
     environment {
         DOCKER_IMAGE = "shammery/user-service"
@@ -12,20 +7,22 @@ pipeline {
 
     stages {
         stage('Checkout') {
-            steps {
-                checkout scm
-            }
+            steps { checkout scm }
         }
 
         stage('Build & Test') {
             steps {
-                sh 'mvn clean test package -DskipTests=false'
+                script {
+                    docker.image('maven:3.8.4-openjdk-11').inside('-v $PWD:/workspace -w /workspace/user-service') {
+                        sh 'mvn clean test package -DskipTests=false'
+                    }
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE:latest .'
+                sh 'docker build -t $DOCKER_IMAGE:latest user-service/'
             }
         }
 
