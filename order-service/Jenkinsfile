@@ -1,0 +1,40 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "shammery/order-service"
+    }
+
+    stages {
+        stage('Checkout') {
+            steps { checkout scm }
+        }
+
+        stage('Build & Test') {
+            steps {
+                script {
+                    docker.image('maven:3.8.4-openjdk-11').inside('-v $PWD:/workspace -w /workspace/order-service') {
+                        sh 'mvn clean test package -DskipTests=false'
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $DOCKER_IMAGE:latest order-service/'
+            }
+        }
+
+        stage('Login & Push') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                    retry(3) {
+                        sh "docker push shammery/order-service:latest"
+                    }
+                }
+            }
+        }
+    }
+}
