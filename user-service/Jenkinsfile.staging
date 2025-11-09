@@ -27,8 +27,7 @@ pipeline {
                     sh "kubectl delete service user-service --ignore-not-found"
 
                     // Crea el deployment y el service
-                    sh "kubectl apply -f user-service/k8s/deployment.yaml"
-                    sh "kubectl apply -f user-service/k8s/service.yaml"
+                    sh "kubectl apply -f k8s/user-service.yaml"
 
                     // Espera a que el pod esté listo
                     sh "kubectl rollout status deployment/user-service"
