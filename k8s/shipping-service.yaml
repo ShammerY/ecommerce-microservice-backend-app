@@ -2,7 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: shipping-service
-  namespace: ecommerce
+  labels:
+    app: shipping-service
 spec:
   replicas: 1
   selector:
@@ -14,27 +15,24 @@ spec:
         app: shipping-service
     spec:
       containers:
-      - name: shipping-service
-        image: shipping-service:latest
-        ports:
-        - containerPort: 8600
-        env:
-        - name: SPRING_PROFILES_ACTIVE
-          value: "dev"
-        - name: SPRING_CONFIG_IMPORT
-          value: "optional:configserver:http://config-server:9296"
-        - name: SPRING_ZIPKIN_BASE_URL
-          value: "http://zipkin:9411"
+        - name: shipping-service
+          image: shammery/shipping-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8600
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "staging"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: shipping-service
-  namespace: ecommerce
 spec:
+  type: NodePort
   selector:
     app: shipping-service
   ports:
-  - port: 8600
-    targetPort: 8600
-  type: ClusterIP
+    - protocol: TCP
+      port: 8600
+      targetPort: 8600

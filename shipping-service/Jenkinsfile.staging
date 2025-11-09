@@ -1,0 +1,57 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "shammery/shipping-service:latest"
+        KUBE_CONFIG = "$HOME/.kube/config"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    echo "Desplegando shipping-service en entorno de Staging..."
+
+                    // Verifica conexión con el cluster
+                    sh "kubectl cluster-info"
+
+                    // Elimina versiones previas si existen
+                    sh "kubectl delete deployment shipping-service --ignore-not-found"
+                    sh "kubectl delete service shipping-service --ignore-not-found"
+
+                    // Crea el deployment y el service
+                    sh "kubectl apply -f k8s/shipping-service.yaml"
+
+                    // Espera a que el pod esté listo
+                    sh "kubectl rollout status deployment/shipping-service"
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    echo "Verificando pods y servicios activos..."
+                    sh "kubectl get pods -l app=shipping-service -o wide"
+                    sh "kubectl get svc shipping-service"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Despliegue de shipping-service en entorno de Staging completado correctamente."
+        }
+        failure {
+            echo "Error en el despliegue de shipping-service en Staging."
+        }
+    }
+}

@@ -2,7 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: payment-service
-  namespace: ecommerce
+  labels:
+    app: payment-service
 spec:
   replicas: 1
   selector:
@@ -14,27 +15,24 @@ spec:
         app: payment-service
     spec:
       containers:
-      - name: payment-service
-        image: payment-service:latest
-        ports:
-        - containerPort: 8400
-        env:
-        - name: SPRING_PROFILES_ACTIVE
-          value: "dev"
-        - name: SPRING_CONFIG_IMPORT
-          value: "optional:configserver:http://config-server:9296"
-        - name: SPRING_ZIPKIN_BASE_URL
-          value: "http://zipkin:9411"
+        - name: payment-service
+          image: shammery/payment-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8400
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "staging"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: payment-service
-  namespace: ecommerce
 spec:
+  type: NodePort
   selector:
     app: payment-service
   ports:
-  - port: 8400
-    targetPort: 8400
-  type: ClusterIP
+    - protocol: TCP
+      port: 8400
+      targetPort: 8400

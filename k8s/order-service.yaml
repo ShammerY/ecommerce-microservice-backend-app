@@ -2,7 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: order-service
-  namespace: ecommerce
+  labels:
+    app: order-service
 spec:
   replicas: 1
   selector:
@@ -14,27 +15,24 @@ spec:
         app: order-service
     spec:
       containers:
-      - name: order-service
-        image: order-service:latest
-        ports:
-        - containerPort: 8300
-        env:
-        - name: SPRING_PROFILES_ACTIVE
-          value: "dev"
-        - name: SPRING_CONFIG_IMPORT
-          value: "optional:configserver:http://config-server:9296"
-        - name: SPRING_ZIPKIN_BASE_URL
-          value: "http://zipkin:9411"
+        - name: order-service
+          image: shammery/order-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8300
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "staging"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: order-service
-  namespace: ecommerce
 spec:
+  type: NodePort
   selector:
     app: order-service
   ports:
-  - port: 8300
-    targetPort: 8300
-  type: ClusterIP
+    - protocol: TCP
+      port: 8300
+      targetPort: 8300

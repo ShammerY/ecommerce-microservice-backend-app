@@ -1,0 +1,57 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "shammery/payment-service:latest"
+        KUBE_CONFIG = "$HOME/.kube/config"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    echo "Desplegando payment-service en entorno de Staging..."
+
+                    // Verifica conexión con el cluster
+                    sh "kubectl cluster-info"
+
+                    // Elimina versiones previas si existen
+                    sh "kubectl delete deployment payment-service --ignore-not-found"
+                    sh "kubectl delete service payment-service --ignore-not-found"
+
+                    // Crea el deployment y el service
+                    sh "kubectl apply -f k8s/payment-service.yaml"
+
+                    // Espera a que el pod esté listo
+                    sh "kubectl rollout status deployment/payment-service"
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    echo "🔍 Verificando pods y servicios activos..."
+                    sh "kubectl get pods -l app=payment-service -o wide"
+                    sh "kubectl get svc payment-service"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Despliegue de payment-service en entorno de Staging completado correctamente."
+        }
+        failure {
+            echo "Error en el despliegue de payment-service en Staging."
+        }
+    }
+}

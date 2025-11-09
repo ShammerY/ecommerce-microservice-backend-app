@@ -2,7 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-gateway
-  namespace: ecommerce
+  labels:
+    app: api-gateway
 spec:
   replicas: 1
   selector:
@@ -14,29 +15,24 @@ spec:
         app: api-gateway
     spec:
       containers:
-      - name: api-gateway
-        image: api-gateway:latest
-        ports:
-        - containerPort: 8080
-        env:
-        - name: SPRING_PROFILES_ACTIVE
-          value: "dev"
-        - name: SPRING_CONFIG_IMPORT
-          value: "optional:configserver:http://config-server:9296"
-        - name: SPRING_ZIPKIN_BASE_URL
-          value: "http://zipkin:9411"
-
+        - name: api-gateway
+          image: shammery/api-gateway:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "staging"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: api-gateway
-  namespace: ecommerce
 spec:
+  type: NodePort
   selector:
     app: api-gateway
   ports:
-  - port: 8080
-    targetPort: 8080
-    nodePort: 30080        # Cambia si ya está ocupado
-  type: NodePort
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
