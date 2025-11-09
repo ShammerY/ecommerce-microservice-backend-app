@@ -1,0 +1,58 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "shammery/user-service:latest"
+        KUBE_CONFIG = "$HOME/.kube/config"
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    echo "Aplicando manifests de Kubernetes..."
+
+                    // Verifica conexión con el cluster
+                    sh "kubectl cluster-info"
+
+                    // Elimina versiones previas si existen
+                    sh "kubectl delete deployment user-service --ignore-not-found"
+                    sh "kubectl delete service user-service --ignore-not-found"
+
+                    // Crea el deployment y el service
+                    sh "kubectl apply -f user-service/k8s/deployment.yaml"
+                    sh "kubectl apply -f user-service/k8s/service.yaml"
+
+                    // Espera a que el pod esté listo
+                    sh "kubectl rollout status deployment/user-service"
+                }
+            }
+        }
+
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    echo "Verificando pods activos..."
+                    sh "kubectl get pods -l app=user-service -o wide"
+                    sh "kubectl get svc user-service"
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Despliegue en entorno de Staging completado correctamente."
+        }
+        failure {
+            echo "Error en el despliegue de Staging."
+        }
+    }
+}
