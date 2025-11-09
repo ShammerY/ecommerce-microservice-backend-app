@@ -79,11 +79,14 @@ pipeline {
             echo "✅ Despliegue de producción completado exitosamente para todos los microservicios."
         }
         failure {
-            echo "❌ Error en el despliegue. Revirtiendo los despliegues de todos los microservicios..."
-            def services = ['user-service','api-gateway','product-service','order-service','shipping-service','payment-service']
-            for (s in services) {
-                sh "kubectl rollout undo deployment/${s} -n ${KUBE_NAMESPACE}"
+            script {
+                echo "❌ Error en el despliegue. Revirtiendo los despliegues de todos los microservicios..."
+                def services = ['user-service','api-gateway','product-service','order-service','shipping-service','payment-service']
+                for (s in services) {
+                    sh "kubectl rollout undo deployment/${s} -n ${KUBE_NAMESPACE}"
+                }
             }
         }
     }
+
 }
