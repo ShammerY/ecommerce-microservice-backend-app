@@ -2,7 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: product-service
-  namespace: ecommerce
+  labels:
+    app: product-service
 spec:
   replicas: 1
   selector:
@@ -14,28 +15,25 @@ spec:
         app: product-service
     spec:
       containers:
-      - name: product-service
-        image: product-service:latest
-        ports:
-        - containerPort: 8500
-        env:
-        - name: SPRING_PROFILES_ACTIVE
-          value: "dev"
-        - name: SPRING_CONFIG_IMPORT
-          value: "optional:configserver:http://config-server:9296"
-        - name: SPRING_ZIPKIN_BASE_URL
-          value: "http://zipkin:9411"
-
+        - name: product-service
+          image: shammery/product-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8500   # Asegúrate que coincide con el puerto real del microservicio
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "staging"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: product-service
-  namespace: ecommerce
 spec:
+  type: NodePort
   selector:
     app: product-service
   ports:
-  - port: 8500       # Puerto interno del cluster
-    targetPort: 8500 # Puerto del contenedor
-  type: ClusterIP
+    - protocol: TCP
+      port: 8500
+      targetPort: 8500
+
