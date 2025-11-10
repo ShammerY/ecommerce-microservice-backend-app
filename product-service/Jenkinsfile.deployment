@@ -16,7 +16,7 @@ pipeline {
 
         stage('Build & Unit Test') {
             steps {
-                docker.image('maven:3.8.4-openjdk-11').inside('-v $PWD:/workspace -w /workspace/product-service') {
+                docker.image('maven:3.8.4-openjdk-11').inside("-v ${pwd()}:/workspace -w /workspace/product-service") {
                     sh 'mvn clean package -DskipTests=false'
                 }
             }
