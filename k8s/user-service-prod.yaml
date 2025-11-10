@@ -6,7 +6,7 @@ metadata:
   labels:
     app: user-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: user-service
@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: user-service
-          image: shammery/user-service:v1.0.0
+          image: shammery/user-service:latest
           imagePullPolicy: Always
           ports:
             - containerPort: 8700
