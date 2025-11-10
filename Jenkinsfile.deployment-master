@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         KUBE_NAMESPACE = "production"
-        SERVICES = ["user-service", "order-service", "shipping-service", "payment-service", "api-gateway"]
     }
 
     stages {
@@ -17,21 +16,36 @@ pipeline {
         stage('Deploy All Microservices') {
             steps {
                 script {
+                    // ✅ Definimos la lista de microservicios aquí (no en environment)
+                    def SERVICES = [
+                        "user-service",
+                        "order-service",
+                        "shipping-service",
+                        "payment-service",
+                        "api-gateway"
+                    ]
+
                     for (service in SERVICES) {
                         echo "🚀 Iniciando deployment para ${service}..."
-                        
-                        // Ejecuta el pipeline de deployment de cada microservicio
+
+                        // Cambiamos el directorio al microservicio actual
                         dir("${service}") {
                             try {
                                 echo "📦 Compilando y desplegando ${service}..."
+
+                                // Ejecutar Maven dentro de contenedor oficial
                                 docker.image('maven:3.8.4-openjdk-11').inside('-v $PWD:/workspace -w /workspace') {
                                     sh "mvn clean test -f pom.xml"
                                 }
 
+                                // Construir y subir imagen Docker
                                 sh "docker build -t shammery/${service}:v${env.BUILD_NUMBER} ."
                                 sh "docker push shammery/${service}:v${env.BUILD_NUMBER}"
+
+                                // Aplicar despliegue en Kubernetes
                                 sh "kubectl apply -f ../k8s/${service}-prod.yaml -n ${KUBE_NAMESPACE}"
                                 sh "kubectl rollout status deployment/${service} -n ${KUBE_NAMESPACE}"
+
                             } catch (err) {
                                 error "❌ Error al desplegar ${service}: ${err}"
                             }
@@ -75,7 +89,14 @@ pipeline {
         failure {
             echo "❌ El despliegue general falló. Iniciando rollback..."
             script {
-                for (service in SERVICES) {
+                def rollbackServices = [
+                    "user-service",
+                    "order-service",
+                    "shipping-service",
+                    "payment-service",
+                    "api-gateway"
+                ]
+                for (service in rollbackServices) {
                     sh "kubectl rollout undo deployment/${service} -n ${KUBE_NAMESPACE} || true"
                 }
             }
