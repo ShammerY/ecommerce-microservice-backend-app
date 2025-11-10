@@ -8,7 +8,8 @@ ENV SPRING_PROFILES_ACTIVE dev
 
 COPY . .
 # JAR del microservicio
-ADD target/shipping-service-v${PROJECT_VERSION}.jar shipping-service.jar
+# ADD target/shipping-service-v${PROJECT_VERSION}.jar shipping-service.jar
+ADD target/*.jar shipping-service.jar
 
 # Puerto de exposición
 EXPOSE 8600

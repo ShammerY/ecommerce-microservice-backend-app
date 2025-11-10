@@ -8,7 +8,8 @@ ENV SPRING_PROFILES_ACTIVE dev
 
 COPY . .
 # JAR del microservicio
-ADD target/api-gateway-v${PROJECT_VERSION}.jar api-gateway.jar
+# ADD target/api-gateway-v${PROJECT_VERSION}.jar api-gateway.jar
+ADD target/*.jar api-gateway.jar
 
 # Puerto de exposición
 EXPOSE 8080

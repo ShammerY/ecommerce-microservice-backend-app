@@ -8,7 +8,8 @@ ENV SPRING_PROFILES_ACTIVE dev
 
 COPY . .
 # Cambiamos al JAR correspondiente de order-service
-ADD target/order-service-v${PROJECT_VERSION}.jar order-service.jar
+# ADD target/order-service-v${PROJECT_VERSION}.jar order-service.jar
+ADD target/*.jar order-service.jar
 
 # Puerto de exposición del microservicio
 EXPOSE 8300

@@ -7,7 +7,8 @@ WORKDIR /home/app
 ENV SPRING_PROFILES_ACTIVE dev
 
 COPY . .
-ADD target/payment-service-v${PROJECT_VERSION}.jar payment-service.jar
+# ADD target/payment-service-v${PROJECT_VERSION}.jar payment-service.jar
+ADD target/*.jar payment-service.jar
 
 EXPOSE 8400
 
