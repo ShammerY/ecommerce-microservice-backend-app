@@ -3,10 +3,8 @@ kind: Deployment
 metadata:
   name: api-gateway
   namespace: production
-  labels:
-    app: api-gateway
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: api-gateway
@@ -17,13 +15,13 @@ spec:
     spec:
       containers:
         - name: api-gateway
-          image: shammery/api-gateway:v1.0.0
-          imagePullPolicy: Always
+          image: shammery/api-gateway:latest
           ports:
             - containerPort: 8080
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
+
 ---
 apiVersion: v1
 kind: Service
@@ -31,10 +29,10 @@ metadata:
   name: api-gateway
   namespace: production
 spec:
-  type: LoadBalancer
   selector:
     app: api-gateway
   ports:
     - protocol: TCP
       port: 8080
       targetPort: 8080
+  type: LoadBalancer

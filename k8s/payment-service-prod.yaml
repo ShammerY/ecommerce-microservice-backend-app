@@ -3,10 +3,8 @@ kind: Deployment
 metadata:
   name: payment-service
   namespace: production
-  labels:
-    app: payment-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: payment-service
@@ -17,13 +15,13 @@ spec:
     spec:
       containers:
         - name: payment-service
-          image: shammery/payment-service:v1.0.0
-          imagePullPolicy: Always
+          image: shammery/payment-service:latest
           ports:
             - containerPort: 8400
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
+
 ---
 apiVersion: v1
 kind: Service
@@ -31,10 +29,10 @@ metadata:
   name: payment-service
   namespace: production
 spec:
-  type: LoadBalancer
   selector:
     app: payment-service
   ports:
     - protocol: TCP
       port: 8400
       targetPort: 8400
+  type: ClusterIP

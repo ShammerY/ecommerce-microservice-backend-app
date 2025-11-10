@@ -3,10 +3,8 @@ kind: Deployment
 metadata:
   name: shipping-service
   namespace: production
-  labels:
-    app: shipping-service
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: shipping-service
@@ -17,13 +15,13 @@ spec:
     spec:
       containers:
         - name: shipping-service
-          image: shammery/shipping-service:v1.0.0
-          imagePullPolicy: Always
+          image: shammery/shipping-service:latest
           ports:
             - containerPort: 8600
           env:
             - name: SPRING_PROFILES_ACTIVE
               value: "prod"
+
 ---
 apiVersion: v1
 kind: Service
@@ -31,10 +29,10 @@ metadata:
   name: shipping-service
   namespace: production
 spec:
-  type: LoadBalancer
   selector:
     app: shipping-service
   ports:
     - protocol: TCP
       port: 8600
       targetPort: 8600
+  type: ClusterIP

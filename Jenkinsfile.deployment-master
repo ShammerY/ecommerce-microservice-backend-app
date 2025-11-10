@@ -1,0 +1,84 @@
+pipeline {
+    agent any
+
+    environment {
+        KUBE_NAMESPACE = "production"
+        SERVICES = ["user-service", "order-service", "shipping-service", "payment-service", "api-gateway"]
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Deploy All Microservices') {
+            steps {
+                script {
+                    for (service in SERVICES) {
+                        echo "🚀 Iniciando deployment para ${service}..."
+                        
+                        // Ejecuta el pipeline de deployment de cada microservicio
+                        dir("${service}") {
+                            try {
+                                echo "📦 Compilando y desplegando ${service}..."
+                                docker.image('maven:3.8.4-openjdk-11').inside('-v $PWD:/workspace -w /workspace') {
+                                    sh "mvn clean test -f pom.xml"
+                                }
+
+                                sh "docker build -t shammery/${service}:v${env.BUILD_NUMBER} ."
+                                sh "docker push shammery/${service}:v${env.BUILD_NUMBER}"
+                                sh "kubectl apply -f ../k8s/${service}-prod.yaml -n ${KUBE_NAMESPACE}"
+                                sh "kubectl rollout status deployment/${service} -n ${KUBE_NAMESPACE}"
+                            } catch (err) {
+                                error "❌ Error al desplegar ${service}: ${err}"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Verification') {
+            steps {
+                script {
+                    echo "🔍 Verificando servicios activos..."
+                    sh "kubectl get pods -n ${KUBE_NAMESPACE}"
+                    sh "kubectl get svc -n ${KUBE_NAMESPACE}"
+                }
+            }
+        }
+
+        stage('Generate Global Release Notes') {
+            steps {
+                script {
+                    echo "📝 Generando release notes global..."
+                    sh '''
+                        echo "### Release v${BUILD_NUMBER} - $(date)" > release_notes_master.md
+                        for service in user-service order-service shipping-service payment-service api-gateway; do
+                            echo "- Deployed $service" >> release_notes_master.md
+                        done
+                        echo "" >> release_notes_master.md
+                    '''
+                    archiveArtifacts artifacts: 'release_notes_master.md', fingerprint: true
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "✅ Todos los microservicios fueron desplegados exitosamente en producción."
+        }
+        failure {
+            echo "❌ El despliegue general falló. Iniciando rollback..."
+            script {
+                for (service in SERVICES) {
+                    sh "kubectl rollout undo deployment/${service} -n ${KUBE_NAMESPACE} || true"
+                }
+            }
+        }
+    }
+}
