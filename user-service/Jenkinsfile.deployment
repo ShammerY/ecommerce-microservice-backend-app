@@ -1,49 +1,42 @@
 pipeline {
     agent any
-
     environment {
         DOCKER_IMAGE = "shammery/user-service"
         VERSION = "v${env.BUILD_NUMBER}"      // Versión única por build
         KUBE_NAMESPACE = "production"
     }
-
     stages {
-
         stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-
         stage('Build & Unit Test') {
             steps {
                 script {
-                    echo "🏗️ Ejecutando build y pruebas unitarias dentro del contenedor Maven..."
+                    echo "Ejecutando build y pruebas unitarias dentro del contenedor Maven..."
                     docker.image('maven:3.8.4-openjdk-11').inside('-v $PWD:/workspace -w /workspace/user-service') {
                         sh 'mvn clean package -DskipTests=false'
                     }
                 }
             }
         }
-
         stage('Build Docker Image') {
             steps {
-                echo "🐳 Construyendo imagen Docker con etiqueta ${VERSION}"
+                echo "Construyendo imagen Docker con etiqueta ${VERSION}"
                 sh "docker build -t ${DOCKER_IMAGE}:${VERSION} user-service/"
             }
         }
-
         stage('Push Docker Image') {
             steps {
-                echo "📦 Subiendo imagen a Docker Hub..."
+                echo "Subiendo imagen a Docker Hub..."
                 sh "docker push ${DOCKER_IMAGE}:${VERSION}"
             }
         }
-
         stage('Deploy to Production') {
             steps {
                 script {
-                    echo "🚀 Desplegando user-service en entorno de producción..."
+                    echo "Desplegando user-service en entorno de producción..."
                     sh "kubectl delete deployment user-service -n ${KUBE_NAMESPACE} --ignore-not-found"
                     sh "kubectl delete service user-service -n ${KUBE_NAMESPACE} --ignore-not-found"
                     sh "kubectl apply -f k8s/user-service-prod.yaml"
@@ -51,11 +44,10 @@ pipeline {
                 }
             }
         }
-
         stage('Generate Release Notes') {
             steps {
                 script {
-                    echo "📝 Generando Release Notes..."
+                    echo "Generando Release Notes..."
                     sh '''
                         echo "### Release ${VERSION} - $(date)" >> release_notes.md
                         git log -1 --pretty=format:"- %h %s (%an)" >> release_notes.md
@@ -66,7 +58,6 @@ pipeline {
             }
         }
     }
-
     post {
         success {
             echo "Despliegue de producción completado exitosamente."

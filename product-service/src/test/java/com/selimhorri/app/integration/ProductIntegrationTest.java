@@ -42,17 +42,14 @@ class ProductIntegrationTest {
     @BeforeEach
     void setUp() {
 
-        // 🔹 Limpiar BD antes de cada test
         productRepository.deleteAll();
         categoryRepository.deleteAll();
 
-        // 🔹 Crear una categoría real en la base de datos
         Category category = new Category();
         category.setCategoryTitle("Electronics");
         category.setImageUrl("https://example.com/electronics.jpg");
         savedCategory = categoryRepository.save(category);
 
-        // 🔹 Crear un producto que usa esa categoría
         CategoryDto categoryDto = CategoryDto.builder()
                 .categoryId(savedCategory.getCategoryId())
                 .categoryTitle(savedCategory.getCategoryTitle())
