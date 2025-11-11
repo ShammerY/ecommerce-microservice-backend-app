@@ -15,11 +15,20 @@ pipeline {
         }
 
         stage('Build & Unit Test') {
+            // steps {
+            //     docker.image('maven:3.8.4-openjdk-11').inside('-v $PWD:/workspace -w /workspace/shipping-service') {
+            //         sh 'mvn clean package -DskipTests=false'
+            //     }
+            // }
             steps {
-                docker.image('maven:3.8.4-openjdk-11').inside('-v $PWD:/workspace -w /workspace/shipping-service') {
-                    sh 'mvn clean package -DskipTests=false'
+                script {
+                    echo "Ejecutando build y pruebas unitarias dentro del contenedor Maven..."
+                    docker.image('maven:3.8.4-openjdk-11').inside {
+                        sh 'mvn clean package -DskipTests=false -f shipping-service/pom.xml'
+                    }
                 }
             }
+
         }
 
         stage('Build Docker Image') {
